@@ -1,15 +1,20 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Send } from "lucide-react"
+import type React from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Send } from "lucide-react";
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -18,53 +23,68 @@ export default function ContactForm() {
     phone: "",
     subject: "",
     message: "",
-  })
+  });
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-    // Create email content
-    const emailSubject = `Contact Form: ${formData.subject || "General Inquiry"} - ${formData.name}`
-    const emailBody = `
-New contact form submission from AnyMove Ireland website:
+    const endpoint = process.env.NEXT_PUBLIC_FORMSPREE_ENDPOINT;
+    if (!endpoint) {
+      console.error(
+        "Formspree endpoint is not defined in environment variables."
+      );
+      alert("There was a configuration error. Please try again later.");
+      setIsSubmitting(false);
+      return;
+    }
 
-Name: ${formData.name}
-Email: ${formData.email}
-Phone: ${formData.phone || "Not provided"}
-Subject: ${formData.subject || "General Inquiry"}
+    const payload = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      subject: formData.subject,
+      message: formData.message,
+    };
 
-Message:
-${formData.message}
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
----
-This message was sent from the AnyMove Ireland website contact form.
-Please respond to the customer at: ${formData.email}
-    `.trim()
-
-    // Create mailto link
-    const mailtoLink = `mailto:info@anymove.ie?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
-
-    // Open email client
-    window.location.href = mailtoLink
-
-    // Reset form after a short delay
-    setTimeout(() => {
-      setFormData({ name: "", email: "", phone: "", subject: "", message: "" })
-      setIsSubmitting(false)
-      alert("Your message has been prepared in your email client. Please send the email to complete your inquiry.")
-    }, 1000)
-  }
+      if (response.ok) {
+        alert("Thank you! Your message has been sent.");
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          subject: "",
+          message: "",
+        });
+      } else {
+        alert("Oops! Something went wrong. Please try again later.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("There was an error sending your message.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Send us a Message</CardTitle>
         <p className="text-gray-600">
-          Fill out the form below and we'll prepare an email for you to send. Your default email client will open with
-          all the details pre-filled.
+          Fill out the form below and we'll prepare an email for you to send.
+          Your default email client will open with all the details pre-filled.
         </p>
       </CardHeader>
       <CardContent>
@@ -76,7 +96,9 @@ Please respond to the customer at: ${formData.email}
                 id="name"
                 placeholder="Your full name"
                 value={formData.name}
-                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, name: e.target.value }))
+                }
                 required
               />
             </div>
@@ -87,7 +109,9 @@ Please respond to the customer at: ${formData.email}
                 type="email"
                 placeholder="your.email@example.com"
                 value={formData.email}
-                onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, email: e.target.value }))
+                }
                 required
               />
             </div>
@@ -100,7 +124,9 @@ Please respond to the customer at: ${formData.email}
               type="tel"
               placeholder="+353 1 234 5678"
               value={formData.phone}
-              onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, phone: e.target.value }))
+              }
             />
           </div>
 
@@ -108,7 +134,9 @@ Please respond to the customer at: ${formData.email}
             <Label htmlFor="subject">Subject</Label>
             <Select
               value={formData.subject}
-              onValueChange={(value) => setFormData((prev) => ({ ...prev, subject: value }))}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, subject: value }))
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a subject" />
@@ -116,13 +144,19 @@ Please respond to the customer at: ${formData.email}
               <SelectContent>
                 <SelectItem value="Request Quote">Request Quote</SelectItem>
                 <SelectItem value="Booking Inquiry">Booking Inquiry</SelectItem>
-                <SelectItem value="Residential Move">Residential Move</SelectItem>
+                <SelectItem value="Residential Move">
+                  Residential Move
+                </SelectItem>
                 <SelectItem value="Commercial Move">Commercial Move</SelectItem>
                 <SelectItem value="Storage Inquiry">Storage Inquiry</SelectItem>
-                <SelectItem value="Packing Services">Packing Services</SelectItem>
+                <SelectItem value="Packing Services">
+                  Packing Services
+                </SelectItem>
                 <SelectItem value="Complaint">Complaint</SelectItem>
                 <SelectItem value="Compliment">Compliment</SelectItem>
-                <SelectItem value="General Question">General Question</SelectItem>
+                <SelectItem value="General Question">
+                  General Question
+                </SelectItem>
                 <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
@@ -134,13 +168,21 @@ Please respond to the customer at: ${formData.email}
               id="message"
               placeholder="Tell us how we can help you..."
               value={formData.message}
-              onChange={(e) => setFormData((prev) => ({ ...prev, message: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, message: e.target.value }))
+              }
               rows={6}
               required
             />
           </div>
 
-          <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+          {/* Keep this part unchanged as requested */}
+          <Button
+            type="submit"
+            className="w-full"
+            size="lg"
+            disabled={isSubmitting}
+          >
             <Send className="h-4 w-4 mr-2" />
             {isSubmitting ? "Preparing Email..." : "Send Message"}
           </Button>
@@ -155,7 +197,10 @@ Please respond to the customer at: ${formData.email}
             </ol>
             <p className="mt-2 text-xs">
               <strong>Alternative:</strong> You can also email us directly at{" "}
-              <a href="mailto:info@anymove.ie" className="text-primary hover:underline">
+              <a
+                href="mailto:info@anymove.ie"
+                className="text-primary hover:underline"
+              >
                 info@anymove.ie
               </a>
             </p>
@@ -163,5 +208,5 @@ Please respond to the customer at: ${formData.email}
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }
