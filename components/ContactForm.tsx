@@ -196,7 +196,7 @@ export default function ContactForm() {
               <li>Click send in your email client to complete your inquiry</li>
             </ol>
             <p className="mt-2 text-xs">
-              <strong>Alternative:</strong> You can also email us directly at{" "}
+              <strong>Alternative:</strong> You can also Email us directly at{" "}
               <a
                 href="mailto:info@anymove.ie"
                 className="text-primary hover:underline"
