@@ -4,6 +4,7 @@ import { Poppins } from "next/font/google"
 import "./globals.css"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
+import { Toaster } from "@/components/ui/toaster";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -24,8 +25,12 @@ export const metadata: Metadata = {
     locale: "en_IE",
   },
   robots: "index, follow",
-  viewport: "width=device-width, initial-scale=1",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({
@@ -36,6 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={poppins.variable}>
       <body className="font-poppins antialiased">
+        <Toaster />
         <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />

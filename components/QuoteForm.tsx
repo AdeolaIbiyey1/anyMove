@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { CalendarDays, MapPin, Package, User } from "lucide-react"
+import { CalendarDays, MapPin, Package, User, CheckCircle } from "lucide-react"
+import { toast } from "@/components/ui/use-toast";
 
 export default function QuoteForm() {
   const [step, setStep] = useState(1)
@@ -86,9 +87,15 @@ Customer phone: ${formData.phone}
     window.location.href = mailtoLink
 
     // Show success message
-    alert(
-      "Your quote request has been prepared in your email client. Please send the email and we'll get back to you within 24 hours with a detailed quote!",
-    )
+    toast({
+      title: "Quote Prepared",
+      description: (
+        <div className="flex flex-col items-center">
+          <CheckCircle className="text-green-500 w-10 h-10 mb-2" />
+          <span>Your quote request has been prepared in your email client. Please send the email and we'll get back to you within 24 hours with a detailed quote!</span>
+        </div>
+      ),
+    });
   }
 
   return (
