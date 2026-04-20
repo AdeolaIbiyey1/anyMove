@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { CalendarDays, MapPin, Package, User, CheckCircle } from "lucide-react"
-import { toast } from "@/components/ui/use-toast";
+import { CalendarDays, MapPin, Package, User, CheckCircle, Loader2 } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { sendQuoteEmail } from "@/app/actions/email-actions";
 
 export default function QuoteForm() {
   const [step, setStep] = useState(1)
@@ -28,6 +29,9 @@ export default function QuoteForm() {
     phone: "",
     specialInstructions: "",
   })
+
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const handleNext = () => {
     if (step < 4) setStep(step + 1)
@@ -46,56 +50,36 @@ export default function QuoteForm() {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSubmitting(true)
 
-    // Create detailed email content
-    const emailSubject = `Quote Request - ${formData.moveType} - ${formData.firstName} ${formData.lastName}`
-    const emailBody = `
-New quote request from AnyMove Ireland website:
+    try {
+      const result = await sendQuoteEmail(formData)
 
-CUSTOMER INFORMATION:
-Name: ${formData.firstName} ${formData.lastName}
-Email: ${formData.email}
-Phone: ${formData.phone}
+      if (result.success) {
+        setShowSuccess(true)
 
-MOVE DETAILS:
-Move Type: ${formData.moveType}
-Home/Office Size: ${formData.homeSize}
-Move Date: ${formData.moveDate}
-
-LOCATIONS:
-From: ${formData.fromAddress}
-To: ${formData.toAddress}
-
-ADDITIONAL SERVICES:
-${formData.additionalServices.length > 0 ? formData.additionalServices.join(", ") : "None selected"}
-
-SPECIAL INSTRUCTIONS:
-${formData.specialInstructions || "None provided"}
-
----
-This quote request was submitted through the AnyMove Ireland website.
-Please respond to the customer at: ${formData.email}
-Customer phone: ${formData.phone}
-    `.trim()
-
-    // Create mailto link
-    const mailtoLink = `mailto:info@anymove.ie?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
-
-    // Open email client
-    window.location.href = mailtoLink
-
-    // Show success message
-    toast({
-      title: "Quote Prepared",
-      description: (
-        <div className="flex flex-col items-center">
-          <CheckCircle className="text-green-500 w-10 h-10 mb-2" />
-          <span>Your quote request has been prepared in your email client. Please send the email and we'll get back to you within 24 hours with a detailed quote!</span>
-        </div>
-      ),
-    });
+        // Optionally reset the form or redirect to a thank you page
+        // setStep(1);
+        // setFormData({ ...initialFormData });
+      } else {
+        toast({
+          title: "Failed to send",
+          description: `There was an error sending your quote: ${result.error}. Please try again later.`,
+          variant: "destructive",
+        })
+      }
+    } catch (err) {
+      console.error(err)
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to the server. Please check your internet connection and try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -304,9 +288,9 @@ Customer phone: ${formData.phone}
                 <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
                   <p className="font-semibold mb-2">What happens next:</p>
                   <ol className="list-decimal list-inside space-y-1">
-                    <li>Click "Get My Quote" to prepare your request</li>
-                    <li>Your email client will open with all details pre-filled</li>
-                    <li>Send the email to submit your quote request</li>
+                    <li>Click "Get My Quote" to submit your request</li>
+                    <li>Your information will be sent directly to our team</li>
+                    <li>We'll review the details and calculate your estimate</li>
                     <li>We'll respond within 24 hours with a detailed quote</li>
                   </ol>
                 </div>
@@ -323,8 +307,15 @@ Customer phone: ${formData.phone}
                   Next Step
                 </Button>
               ) : (
-                <Button type="submit" className="bg-primary hover:bg-primary/90">
-                  Get My Quote
+                <Button type="submit" className="bg-primary hover:bg-primary/90 min-w-[140px]" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Get My Quote"
+                  )}
                 </Button>
               )}
             </div>
@@ -360,6 +351,21 @@ Customer phone: ${formData.phone}
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
+        <DialogContent className="sm:max-w-md text-center">
+          <DialogHeader className="items-center">
+            <CheckCircle className="text-green-500 w-14 h-14 mb-2" />
+            <DialogTitle className="text-xl">Quote Request Received!</DialogTitle>
+            <DialogDescription className="text-base mt-2">
+              Thank you, <strong>{formData.firstName}</strong>! Our team will review your request and reach out to you within <strong>24 hours</strong> at <strong>{formData.email}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <Button className="mt-4 w-full" onClick={() => setShowSuccess(false)}>
+            Close
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

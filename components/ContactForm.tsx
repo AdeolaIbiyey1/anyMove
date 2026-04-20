@@ -14,8 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Send } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import { CustomPopup } from "@/components/ui/CustomPopup";
+import { sendContactEmail } from "@/app/actions/email-actions";
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -33,42 +34,14 @@ export default function ContactForm() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const endpoint = "https://formspree.io/f/xrbkrgvy";
-    if (!endpoint) {
-      console.error(
-        "Formspree endpoint is not defined in environment variables."
-      );
-      setPopup({
-        open: true,
-        status: "error",
-        message: "There was a configuration error. Please try again later.",
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
-    const payload = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      subject: formData.subject,
-      message: formData.message,
-    };
-
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const result = await sendContactEmail(formData);
 
-      if (response.ok) {
+      if (result.success) {
         setPopup({
           open: true,
           status: "success",
-          message: "Thank you! Your message has been sent. We’ll review your message and respond as soon as possible.",
+          message: "Thank you! Your message has been sent successfully. We'll review your inquiry and respond to you at " + formData.email + " as soon as possible.",
         });
         setFormData({
           name: "",
@@ -81,7 +54,7 @@ export default function ContactForm() {
         setPopup({
           open: true,
           status: "error",
-          message: "Oops! Something went wrong. Please try again later.",
+          message: `Oops! Something went wrong: ${result.error}. Please try again later.`,
         });
       }
     } catch (error) {
@@ -89,7 +62,7 @@ export default function ContactForm() {
       setPopup({
         open: true,
         status: "error",
-        message: "There was an error sending your message.",
+        message: "There was a network error sending your message. Please check your connection and try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -108,8 +81,7 @@ export default function ContactForm() {
         <CardHeader>
           <CardTitle>Send us a Message</CardTitle>
           <p className="text-gray-600">
-            Fill out the form below and we'll prepare an email for you to send.
-            Your default email client will open with all the details pre-filled.
+            Fill out the form below and we'll get back to you within 24 hours.
           </p>
         </CardHeader>
         <CardContent>
@@ -201,24 +173,32 @@ export default function ContactForm() {
               />
             </div>
 
-            {/* Keep this part unchanged as requested */}
             <Button
               type="submit"
               className="w-full"
               size="lg"
               disabled={isSubmitting}
             >
-              <Send className="h-4 w-4 mr-2" />
-              {isSubmitting ? "Preparing Email..." : "Send Message"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending Message...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send Message
+                </>
+              )}
             </Button>
 
             <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
               <p className="font-semibold mb-2">How it works:</p>
               <ol className="list-decimal list-inside space-y-1">
                 <li>Fill out the form above with your details</li>
-                <li>Click "Send Message" to prepare your email</li>
-                <li>Your email client will open with a pre-filled message</li>
-                <li>Click send in your email client to complete your inquiry</li>
+                <li>Write your message or inquiry</li>
+                <li>Click "Send Message" to submit directly to our team</li>
+                <li>We'll review and respond via email within 24 hours</li>
               </ol>
               <p className="mt-2 text-xs">
                 <strong>Alternative:</strong> You can also Email us directly at{" "}
