@@ -369,3 +369,7 @@ export default function QuoteForm() {
     </div>
   )
 }
+function toast(arg0: { title: string; description: string; variant: string }) {
+  throw new Error("Function not implemented.")
+}
+
